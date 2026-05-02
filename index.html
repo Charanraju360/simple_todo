@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tasks</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0e0e10;
+    --surface: #17171a;
+    --border: #2a2a30;
+    --text: #f0f0f2;
+    --muted: #6b6b78;
+    --accent: #c8f135;
+    --accent-dim: #1a2800;
+    --low: #3b82f6;
+    --med: #f59e0b;
+    --high: #ef4444;
+    --radius: 10px;
+    --mono: 'DM Mono', monospace;
+    --display: 'Syne', sans-serif;
+  }
+
+  body {
+    font-family: var(--mono);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .wrap { max-width: 640px; margin: 0 auto; }
+
+  header {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+  }
+
+  h1 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 2rem;
+    letter-spacing: -0.03em;
+    color: var(--accent);
+  }
+
+  .task-count {
+    font-size: 0.75rem;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    padding: 2px 10px;
+  }
+
+  /* --- Form --- */
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .form-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.875rem;
+    padding: 0.6rem 0.9rem;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input[type="text"]:focus { border-color: var(--accent); }
+  input[type="text"]::placeholder { color: var(--muted); }
+
+  select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    padding: 0.6rem 0.8rem;
+    outline: none;
+    cursor: pointer;
+  }
+  select:focus { border-color: var(--accent); }
+
+  button.add-btn {
+    background: var(--accent);
+    color: #0e0e10;
+    border: none;
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 0.6rem 1.2rem;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  button.add-btn:hover { opacity: 0.9; }
+  button.add-btn:active { transform: scale(0.97); }
+  button.add-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* --- Filters --- */
+  .filters {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    padding: 4px 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .filter-btn:hover { border-color: var(--muted); color: var(--text); }
+  .filter-btn.active {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* --- Task list --- */
+  .task-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .task {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: border-color 0.15s, opacity 0.2s;
+    animation: slideIn 0.2s ease;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .task.done { opacity: 0.45; }
+  .task:hover { border-color: #3a3a44; }
+
+  .check {
+    width: 20px; height: 20px;
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .task.done .check {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .check-mark {
+    width: 10px; height: 6px;
+    border-left: 2px solid #0e0e10;
+    border-bottom: 2px solid #0e0e10;
+    transform: rotate(-45deg) translateY(-1px);
+    display: none;
+  }
+  .task.done .check-mark { display: block; }
+
+  .task-title {
+    flex: 1;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    word-break: break-word;
+  }
+  .task.done .task-title { text-decoration: line-through; color: var(--muted); }
+
+  .priority-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .p-low  { background: var(--low); }
+  .p-medium { background: var(--med); }
+  .p-high { background: var(--high); }
+
+  .del-btn {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 0 4px;
+    line-height: 1;
+    transition: color 0.15s;
+    flex-shrink: 0;
+  }
+  .del-btn:hover { color: var(--high); }
+
+  /* --- States --- */
+  .empty {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+    padding: 3rem 0;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+  }
+
+  .error-msg {
+    background: #2a0a0a;
+    border: 1px solid var(--high);
+    border-radius: 6px;
+    color: #f87171;
+    font-size: 0.8rem;
+    padding: 0.6rem 1rem;
+    margin-bottom: 1rem;
+    display: none;
+  }
+  .error-msg.show { display: block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>tasks</h1>
+    <span class="task-count" id="count">0 tasks</span>
+  </header>
+
+  <div class="form-card">
+    <div class="form-row">
+      <input type="text" id="task-input" placeholder="what needs doing?" maxlength="200" />
+      <select id="priority-sel">
+        <option value="low">low</option>
+        <option value="medium" selected>medium</option>
+        <option value="high">high</option>
+      </select>
+    </div>
+    <button class="add-btn" id="add-btn" onclick="addTask()">+ add task</button>
+  </div>
+
+  <div class="error-msg" id="err"></div>
+
+  <div class="filters">
+    <button class="filter-btn active" onclick="setFilter('all', this)">all</button>
+    <button class="filter-btn" onclick="setFilter('active', this)">active</button>
+    <button class="filter-btn" onclick="setFilter('done', this)">done</button>
+    <button class="filter-btn" onclick="setFilter('high', this)">⬤ high</button>
+  </div>
+
+  <div class="task-list" id="task-list"></div>
+
+</div>
+
+<script>
+const API = 'http://localhost:3000/api';
+let tasks = [];
+let filter = 'all';
+
+async function loadTasks() {
+  try {
+    const r = await fetch(`${API}/tasks`);
+    if (!r.ok) throw new Error(await r.text());
+    tasks = await r.json();
+    render();
+  } catch (e) {
+    showError('Cannot reach server. Is it running? ' + e.message);
+  }
+}
+
+function filtered() {
+  if (filter === 'active') return tasks.filter(t => !t.done);
+  if (filter === 'done')   return tasks.filter(t => t.done);
+  if (filter === 'high')   return tasks.filter(t => t.priority === 'high');
+  return tasks;
+}
+
+function render() {
+  const list = document.getElementById('task-list');
+  const visible = filtered();
+  const total = tasks.filter(t => !t.done).length;
+  document.getElementById('count').textContent = `${total} remaining`;
+
+  if (!visible.length) {
+    list.innerHTML = `<div class="empty">no tasks here yet</div>`;
+    return;
+  }
+
+  list.innerHTML = visible.map(t => `
+    <div class="task ${t.done ? 'done' : ''}" id="task-${t.id}">
+      <div class="check" onclick="toggleDone(${t.id}, ${!t.done})">
+        <div class="check-mark"></div>
+      </div>
+      <div class="priority-dot p-${t.priority}"></div>
+      <span class="task-title">${escHtml(t.title)}</span>
+      <button class="del-btn" onclick="deleteTask(${t.id})" title="delete">×</button>
+    </div>
+  `).join('');
+}
+
+async function addTask() {
+  const inp = document.getElementById('task-input');
+  const pri = document.getElementById('priority-sel').value;
+  const title = inp.value.trim();
+  if (!title) { inp.focus(); return; }
+
+  const btn = document.getElementById('add-btn');
+  btn.disabled = true;
+  try {
+    const r = await fetch(`${API}/tasks`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, priority: pri })
+    });
+    if (!r.ok) throw new Error(await r.text());
+    const task = await r.json();
+    tasks.unshift(task);
+    inp.value = '';
+    render();
+    hideError();
+  } catch (e) {
+    showError('Failed to add: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    inp.focus();
+  }
+}
+
+async function toggleDone(id, done) {
+  try {
+    const r = await fetch(`${API}/tasks/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ done })
+    });
+    if (!r.ok) throw new Error(await r.text());
+    const updated = await r.json();
+    tasks = tasks.map(t => t.id === id ? updated : t);
+    render();
+  } catch (e) { showError('Update failed: ' + e.message); }
+}
+
+async function deleteTask(id) {
+  const el = document.getElementById(`task-${id}`);
+  if (el) { el.style.opacity = '0'; el.style.transform = 'scale(0.95)'; el.style.transition = 'all 0.15s'; }
+  try {
+    const r = await fetch(`${API}/tasks/${id}`, { method: 'DELETE' });
+    if (!r.ok) throw new Error(await r.text());
+    tasks = tasks.filter(t => t.id !== id);
+    render();
+  } catch (e) {
+    showError('Delete failed: ' + e.message);
+    render();
+  }
+}
+
+function setFilter(f, btn) {
+  filter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function showError(msg) {
+  const el = document.getElementById('err');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+function hideError() {
+  document.getElementById('err').classList.remove('show');
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+document.getElementById('task-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addTask();
+});
+
+loadTasks();
+</script>
+</body>
+</html>
